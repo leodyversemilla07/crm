@@ -32,7 +32,10 @@ class CustomerController extends Controller
      */
     public function create()
     {
-        return Inertia::render('customers/Create');
+        $customFields = \App\Models\CustomField::where('entity_type', 'Customer')->get();
+        return Inertia::render('customers/Create', [
+            'customFields' => $customFields
+        ]);
     }
 
     /**
@@ -40,7 +43,7 @@ class CustomerController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $fields = [
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:customers,email',
             'phone' => 'nullable|string|max:50',
@@ -50,9 +53,23 @@ class CustomerController extends Controller
             'notes' => 'nullable|string',
             'segment' => 'nullable|string|max:100',
             'lifecycle_stage' => 'nullable|string|max:100',
-        ]);
+        ];
+        $customFields = \App\Models\CustomField::where('entity_type', 'Customer')->get();
+        foreach ($customFields as $field) {
+            $fields['custom_fields.' . $field->id] = $field->required ? 'required' : 'nullable';
+        }
+        $validated = $request->validate($fields);
         $validated['user_id'] = Auth::id();
         $customer = Customer::create($validated);
+        // Save custom field values
+        if (isset($validated['custom_fields'])) {
+            foreach ($validated['custom_fields'] as $fieldId => $value) {
+                $customer->customFieldValues()->create([
+                    'custom_field_id' => $fieldId,
+                    'value' => $value,
+                ]);
+            }
+        }
         return redirect()->route('customers.show', $customer->id)->with('success', 'Customer created successfully.');
     }
 
@@ -61,7 +78,7 @@ class CustomerController extends Controller
      */
     public function show(string $id)
     {
-        $customer = Customer::with('user')->findOrFail($id);
+        $customer = Customer::with('user', 'customFieldValues.customField')->findOrFail($id);
         return Inertia::render('customers/Show', [
             'customer' => $customer
         ]);
@@ -72,9 +89,11 @@ class CustomerController extends Controller
      */
     public function edit(string $id)
     {
-        $customer = Customer::findOrFail($id);
+        $customer = Customer::with('customFieldValues')->findOrFail($id);
+        $customFields = \App\Models\CustomField::where('entity_type', 'Customer')->get();
         return Inertia::render('customers/Edit', [
-            'customer' => $customer
+            'customer' => $customer,
+            'customFields' => $customFields
         ]);
     }
 
@@ -84,7 +103,7 @@ class CustomerController extends Controller
     public function update(Request $request, string $id)
     {
         $customer = Customer::findOrFail($id);
-        $validated = $request->validate([
+        $fields = [
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:customers,email,' . $customer->id,
             'phone' => 'nullable|string|max:50',
@@ -94,8 +113,22 @@ class CustomerController extends Controller
             'notes' => 'nullable|string',
             'segment' => 'nullable|string|max:100',
             'lifecycle_stage' => 'nullable|string|max:100',
-        ]);
+        ];
+        $customFields = \App\Models\CustomField::where('entity_type', 'Customer')->get();
+        foreach ($customFields as $field) {
+            $fields['custom_fields.' . $field->id] = $field->required ? 'required' : 'nullable';
+        }
+        $validated = $request->validate($fields);
         $customer->update($validated);
+        // Update custom field values
+        if (isset($validated['custom_fields'])) {
+            foreach ($validated['custom_fields'] as $fieldId => $value) {
+                $customer->customFieldValues()->updateOrCreate(
+                    ['custom_field_id' => $fieldId],
+                    ['value' => $value]
+                );
+            }
+        }
         return redirect()->route('customers.show', $customer->id)->with('success', 'Customer updated successfully.');
     }
 

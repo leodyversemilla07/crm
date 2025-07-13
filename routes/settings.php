@@ -18,4 +18,10 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/appearance');
     })->name('appearance');
+
+    // Custom Field Management
+    Route::get('settings/custom-fields', [\App\Http\Controllers\Settings\CustomFieldController::class, 'index'])->name('settings.custom-fields.index');
+    Route::post('settings/custom-fields', [\App\Http\Controllers\Settings\CustomFieldController::class, 'store'])->name('settings.custom-fields.store');
+    Route::put('settings/custom-fields/{customField}', [\App\Http\Controllers\Settings\CustomFieldController::class, 'update'])->name('settings.custom-fields.update');
+    Route::delete('settings/custom-fields/{customField}', [\App\Http\Controllers\Settings\CustomFieldController::class, 'destroy'])->name('settings.custom-fields.destroy');
 });

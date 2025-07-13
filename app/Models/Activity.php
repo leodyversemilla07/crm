@@ -26,4 +26,9 @@ class Activity extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function customFieldValues()
+    {
+        return $this->morphMany(\App\Models\CustomFieldValue::class, 'entity');
+    }
 }

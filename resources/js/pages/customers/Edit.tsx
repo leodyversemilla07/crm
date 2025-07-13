@@ -24,11 +24,27 @@ interface Customer {
     [key: string]: string | number | string[] | undefined;
 }
 
-interface EditProps {
-    customer: Customer;
+interface CustomField {
+    id: number;
+    name: string;
+    type: 'text' | 'number' | 'date' | 'select';
+    required?: boolean;
+    options?: string[];
 }
 
-export default function Edit({ customer }: EditProps) {
+interface CustomFieldValue {
+    id: number;
+    custom_field_id: number;
+    value: string;
+}
+
+interface EditProps {
+    customer: Customer;
+    customFields?: CustomField[];
+    customFieldValues?: CustomFieldValue[];
+}
+
+export default function Edit({ customer, customFields = [], customFieldValues = [] }: EditProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Customers', href: '/customers' },
         { title: customer.name, href: `/customers/${customer.id}` },
@@ -196,6 +212,70 @@ export default function Edit({ customer }: EditProps) {
                                 </div>
                                 {errors.social_links && <div className="text-red-600 dark:text-red-400 text-sm">{errors.social_links}</div>}
                             </div>
+                            {/* Render custom fields dynamically */}
+                            {customFields.length > 0 && (
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-semibold">Custom Fields</h3>
+                                    {customFields.map((field) => {
+                                        const value = customFieldValues.find((v) => v.custom_field_id === field.id)?.value || '';
+                                        return (
+                                            <div key={field.id} className="space-y-2">
+                                                <Label htmlFor={`custom_field_${field.id}`}>{field.name}{field.required ? ' *' : ''}</Label>
+                                                {field.type === 'text' && (
+                                                    <Input
+                                                        id={`custom_field_${field.id}`}
+                                                        name={`custom_fields[${field.id}]`}
+                                                        value={data[`custom_fields.${field.id}`] || value}
+                                                        onChange={handleChange}
+                                                        required={field.required}
+                                                    />
+                                                )}
+                                                {field.type === 'number' && (
+                                                    <Input
+                                                        id={`custom_field_${field.id}`}
+                                                        name={`custom_fields[${field.id}]`}
+                                                        type="number"
+                                                        value={data[`custom_fields.${field.id}`] || value}
+                                                        onChange={handleChange}
+                                                        required={field.required}
+                                                    />
+                                                )}
+                                                {field.type === 'date' && (
+                                                    <Input
+                                                        id={`custom_field_${field.id}`}
+                                                        name={`custom_fields[${field.id}]`}
+                                                        type="date"
+                                                        value={data[`custom_fields.${field.id}`] || value}
+                                                        onChange={handleChange}
+                                                        required={field.required}
+                                                    />
+                                                )}
+                                                {field.type === 'select' && (
+                                                    <Select value={
+                                                        (
+                                                            typeof data[`custom_fields.${field.id}`] === 'string'
+                                                                ? data[`custom_fields.${field.id}`]
+                                                                : typeof data[`custom_fields.${field.id}`] === 'number'
+                                                                    ? String(data[`custom_fields.${field.id}`])
+                                                                    : (typeof value === 'string' ? value : (typeof value === 'number' ? String(value) : ''))
+                                                        ) as string | undefined
+                                                    } onValueChange={val => setData(`custom_fields.${field.id}`, val)}>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder={`Select ${field.name}`} />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {field.options && field.options.map((opt) => (
+                                                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                )}
+                                                {errors[`custom_fields.${field.id}`] && <div className="text-red-600 dark:text-red-400 text-sm">{errors[`custom_fields.${field.id}`]}</div>}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
 
                             <div className="space-y-2">
                                 <Label htmlFor="notes">Notes</Label>

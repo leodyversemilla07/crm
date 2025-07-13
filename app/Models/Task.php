@@ -27,4 +27,9 @@ class Task extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+
+    public function customFieldValues()
+    {
+        return $this->morphMany(\App\Models\CustomFieldValue::class, 'entity');
+    }
 }

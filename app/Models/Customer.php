@@ -40,4 +40,9 @@ class Customer extends Model
     {
         return $this->hasMany(Activity::class);
     }
+
+    public function customFieldValues()
+    {
+        return $this->morphMany(\App\Models\CustomFieldValue::class, 'entity');
+    }
 }

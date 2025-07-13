@@ -23,7 +23,19 @@ interface CustomerFormData {
     [key: string]: string | string[];
 }
 
-export default function Create() {
+interface CustomField {
+    id: number;
+    name: string;
+    type: 'text' | 'number' | 'date' | 'select';
+    required?: boolean;
+    options?: string[];
+}
+
+interface CreateProps {
+    customFields?: CustomField[];
+}
+
+export default function Create({ customFields = [] }: CreateProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Customers', href: '/customers' },
         { title: 'Add Customer', href: '/customers/create' },
@@ -197,6 +209,63 @@ export default function Create() {
                                 </div>
                                 {errors.social_links && <div className="text-red-600 dark:text-red-400 text-sm">{errors.social_links}</div>}
                             </div>
+                            {/* Render custom fields dynamically */}
+                            {customFields.length > 0 && (
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-semibold">Custom Fields</h3>
+    {customFields.map((field) => (
+                                        <div key={field.id} className="space-y-2">
+                                            <Label htmlFor={`custom_field_${field.id}`}>{field.name}{field.required ? ' *' : ''}</Label>
+                                            {field.type === 'text' && (
+                                                <Input
+                                                    id={`custom_field_${field.id}`}
+                                                    name={`custom_fields[${field.id}]`}
+                                                    value={data[`custom_fields.${field.id}`] || ''}
+                                                    onChange={handleChange}
+                                                    required={field.required}
+                                                />
+                                            )}
+                                            {field.type === 'number' && (
+                                                <Input
+                                                    id={`custom_field_${field.id}`}
+                                                    name={`custom_fields[${field.id}]`}
+                                                    type="number"
+                                                    value={data[`custom_fields.${field.id}`] || ''}
+                                                    onChange={handleChange}
+                                                    required={field.required}
+                                                />
+                                            )}
+                                            {field.type === 'date' && (
+                                                <Input
+                                                    id={`custom_field_${field.id}`}
+                                                    name={`custom_fields[${field.id}]`}
+                                                    type="date"
+                                                    value={data[`custom_fields.${field.id}`] || ''}
+                                                    onChange={handleChange}
+                                                    required={field.required}
+                                                />
+                                            )}
+                                            {field.type === 'select' && (
+                                            <Select value={
+                                                Array.isArray(data[`custom_fields.${field.id}`])
+                                                    ? ''
+                                                    : (data[`custom_fields.${field.id}`] as string | undefined)
+                                            } onValueChange={value => setData(`custom_fields.${field.id}`, value)}>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder={`Select ${field.name}`} />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {field.options && field.options.map((opt: string) => (
+                                                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                            {errors[`custom_fields.${field.id}`] && <div className="text-red-600 dark:text-red-400 text-sm">{errors[`custom_fields.${field.id}`]}</div>}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
 
                             <div className="space-y-2">
                                 <Label htmlFor="notes">Notes</Label>
