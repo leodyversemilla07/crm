@@ -9,12 +9,6 @@ class Customer extends Model
 {
     use HasFactory;
 
-    public function tasks()
-    {
-        return $this->hasMany(Task::class);
-    }
-    use HasFactory;
-
     protected $fillable = [
         'name',
         'email',
@@ -35,5 +29,15 @@ class Customer extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    public function activities()
+    {
+        return $this->hasMany(Activity::class);
     }
 }
